@@ -9,7 +9,6 @@ const logout = require('./logout');
 const start = require('./start');
 const mine = require('./mine');
 const config = require('./config');
-const test = require('./test');
 
 program
   .version('0.0.1', '-v, --version')
