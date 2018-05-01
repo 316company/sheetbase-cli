@@ -40,6 +40,10 @@ module.exports = {
 
   rmDir: (path) => {
     return rmdir(path);
+  },
+
+  readText: (path) => {
+    return fs.readFileSync(path, 'utf8');
   }
   
 };
