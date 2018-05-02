@@ -41,9 +41,6 @@ module.exports = {
             mineMessage += '\n+ Database [database]: '+ chalk.green(
                 configs.databaseUrl||'n/a'
             );
-            mineMessage += '\n+ Backend Database [databaseBackend]: '+ chalk.green(
-                configs.databaseBackendUrl||'n/a'
-            );
     
             console.log('\n');
             console.log(mineMessage);

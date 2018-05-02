@@ -1,6 +1,6 @@
 {
   "name": "sheetbase-cli",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Official CLI for working with Sheetbase projects. ",
   "main": "./src/index.js",
   "preferGlobal": true,

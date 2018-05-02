@@ -33,11 +33,6 @@ module.exports = {
                     appConfigTo.push('\"apiKey\": \"' + configData[key] + '\"');
                 break;
 
-                case 'encryptionKey':
-                    backendConfigFrom.push(/\"encryptionKey\"\: \".*\"/);
-                    backendConfigTo.push('\"encryptionKey\": \"' + configData[key] + '\"');
-                break;
-
                 case 'database':
                     backendConfigFrom.push(/\"database\"\: \".*\"/);
                     backendConfigTo.push('\"database\": \"' + configData[key] + '\"');
@@ -55,9 +50,9 @@ module.exports = {
                     backendConfigTo.push('\"contentFolder\": \"' + configData[key] + '\"');
                 break;
 
-                case 'databaseBackend':
-                    backendConfigFrom.push(/\"databaseBackend\"\: \".*\"/);
-                    backendConfigTo.push('\"databaseBackend\": \"' + configData[key] + '\"');
+                case 'encryptionKey':
+                    backendConfigFrom.push(/\"encryptionKey\"\: \".*\"/);
+                    backendConfigTo.push('\"encryptionKey\": \"' + configData[key] + '\"');
                 break;
             }
         }

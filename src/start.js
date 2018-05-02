@@ -17,7 +17,7 @@ function isValidGitUrl(str) {
     return str && str.substr(0, 8) === 'https://' && str.substr(str.length - 4, 4) === '.git';
 }
 
-async function setupDrive(projectName, databaseId, databaseBackendId) {
+async function setupDrive(projectName, databaseId) {
     projectName = projectName.charAt(0).toUpperCase() + projectName.slice(1);
     
     const client = await google.getClient();
@@ -65,19 +65,6 @@ async function setupDrive(projectName, databaseId, databaseBackendId) {
                     }
                 });
                 if(databaseResponse.data.id) database = databaseResponse.data.id;
-            }
-    
-            // databaseBackend
-            if(databaseBackendId) {
-                let databaseBackendResponse = await client.request({
-                    method: 'post',
-                    url: 'https://www.googleapis.com/drive/v3/files/'+ databaseBackendId +'/copy',
-                    data: {
-                        'name': projectName +' Database (Backend)',
-                        'parents': [projectFolder]
-                    }
-                });
-                if(databaseBackendResponse.data.id) databaseBackend = databaseBackendResponse.data.id;            
             }
             
             // backendScript
@@ -201,7 +188,7 @@ module.exports = {
          * step 2: setup drive and other values
          */
         let configs = await config.getConfigs(dir);
-        const driveIds = await setupDrive(dir, configs.database, configs.databaseBackend);
+        const driveIds = await setupDrive(dir, configs.database);
         const apiKey = randomstring.generate();
         const encryptionKey = randomstring.generate({
             length: 12,
@@ -249,8 +236,7 @@ module.exports = {
 
                         /\"database\"\: \".*\"/,
 
-                        /\"contentFolder\"\: \".*\"/,
-                        /\"databaseBackend\"\: \".*\"/
+                        /\"contentFolder\"\: \".*\"/
                     ],
                     to: [
                         '\"apiKey\": \"' + apiKey + '\"',
@@ -258,8 +244,7 @@ module.exports = {
 
                         '\"database\"\: \"'+ (driveIds.database||'<your_spreadsheet_id>') +'\"',
 
-                        '\"contentFolder\"\: \"'+ (driveIds.contentFolder||'<your_folder_id>') +'\"',
-                        '\"databaseBackend\"\: \"'+ (driveIds.databaseBackend||'<your_spreadsheet_id>') +'\"'
+                        '\"contentFolder\"\: \"'+ (driveIds.contentFolder||'<your_folder_id>') +'\"'
                     ]
                 });
             }
@@ -391,12 +376,11 @@ module.exports = {
 
         configs = await config.getConfigs(dir);
         let propertiesMessage = ''; 
-            propertiesMessage += '+ Remote repo: '+ chalk.green(isValidGitUrl(remote) ? remote: 'n/a');
+            propertiesMessage += '+ Repo: '+ chalk.green(isValidGitUrl(remote) ? remote: 'n/a');
             propertiesMessage += '\n+ Backend: '+ chalk.green(configs.backend||'n/a');
             propertiesMessage += '\n+ Drive folder: '+ chalk.green(configs.projectFolder||'n/a');
             propertiesMessage += '\n+ Backend script: '+ chalk.green(configs.backendScript||'n/a');
             propertiesMessage += '\n+ Database: '+ chalk.green(configs.database||'n/a');
-            propertiesMessage += '\n+ Database (backend): '+ chalk.green(configs.databaseBackend||'n/a');
         
         console.log('\n\n\n> Done! What next?\n');
         console.log(suggestCommandsMessage);        

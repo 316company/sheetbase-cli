@@ -12,7 +12,7 @@ const config = require('./config');
 const whoami = require('./whoami');
 
 program
-  .version('0.0.6', '-v, --version')
+  .version('0.0.7', '-v, --version')
   .description('Sheetbase CLI');
 
 program
