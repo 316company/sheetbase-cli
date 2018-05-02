@@ -20,6 +20,12 @@ Stop granting access to your Google account.
 
 ``$ sheetbase logout``
 
+### whoami
+
+Output your account info.
+
+``$ sheetbase whoami``
+
 ### start
 
 Create new project.
@@ -58,7 +64,7 @@ Params:
 
 ### help
 
-Show help.
+Show helps.
 
 ``$ sheetbase help``
 
@@ -67,11 +73,14 @@ Show help.
 ```bash
 $ sheetbase -v
 
+$ sheetbase login
+$ sheetbase whoami
+
 $ sheetbase start myProject
-
 $ sheetbase start myProject -t ionic-simpleblog
-
 $ sheetbase start myProject -r https://github.com/316Company/some-awesome-sheetbase-theme.git
+
+$ sheetbase mine -o
 
 $ sheetbase config apiKey=my_api_key|database=my_database # multiple values
 

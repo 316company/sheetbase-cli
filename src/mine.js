@@ -2,67 +2,47 @@ const chalk         = require('chalk');
 const opn           = require('opn');
 
 const file = require('./lib/file');
-
-async function getConfigs() {
-    let configs = {};
-
-    try {
-        let text = '';
-        
-        text = file.readText('./sheetbase.config.json');
-        configs.projectFolder = (text.match(/\"driveFolder\"\: \"(.*?)\"/)||[])[1];
-
-        text = file.readText('./backend/configs/Sheetbase.config.js');
-        configs.database = (text.match(/\"database\"\: \"(.*?)\"/)||[])[1];
-        configs.databaseBackend = (text.match(/\"databaseBackend\"\: \"(.*?)\"/)||[])[1];
-
-        text = file.readText('./backend/.clasp.json');        
-        configs.backendScript = (text.match(/\"scriptId\"\: \"(.*?)\"/)||[])[1];
-    } catch(error) {}
-
-    return configs;
-}
+const config = require('./lib/config');
 
 module.exports = {
 
     run: async (configKey) => {
-        const configs = await getConfigs();
+        
+        if (!file.fileExists('./sheetbase.config.json')) {
+            return console.log(
+                chalk.red('\n Looks like you are not in a Sheetbase project!')
+            );
+        }
 
-        // build link
-        let configUrls = {};
-        if(configs.projectFolder)
-            configUrls.projectFolder = 'https://drive.google.com/drive/folders/'+ configs.projectFolder;
-        if(configs.backendScript)
-            configUrls.backendScript = 'https://script.google.com/d/'+ configs.backendScript +'/edit';
-        if(configs.database)
-            configUrls.database = 'https://docs.google.com/spreadsheets/d/'+ configs.database +'/edit';
-        if(configs.databaseBackend)
-            configUrls.databaseBackend = 'https://docs.google.com/spreadsheets/d/'+ configs.databaseBackend +'/edit';
+        const configs = await config.getConfigs();
 
         if(configKey) {
             let linkToOpen = '';
             if(typeof configKey !== 'string') {
-                linkToOpen = configUrls.projectFolder;
+                linkToOpen = configs.projectFolderUrl;
             } else {
-                linkToOpen = configUrls[configKey];
+                linkToOpen = configs[configKey +'Url'];
             }
             if(linkToOpen) {
                 opn(linkToOpen);
-                console.log('Open link in browser: '+ linkToOpen);
+                console.log('\nOpen link in browser: '+ chalk.green(linkToOpen));
             }
         } else {
             let mineMessage = '';
+            mineMessage += '\n+ Backend [backend]: '+ chalk.green(
+                configs.backendUrl||'n/a'
+            );
             mineMessage += '+ Drive folder [projectFolder]: '+ chalk.green(
-                configUrls.projectFolder||'n/a'
+                configs.projectFolderUrl||'n/a'
             );
             mineMessage += '\n+ Backend script [backendScript]: '+ chalk.green(
-                configUrls.backendScript||'n/a'
+                configs.backendScriptUrl||'n/a'
             );
             mineMessage += '\n+ Database [database]: '+ chalk.green(
-                configUrls.database||'n/a'
+                configs.databaseUrl||'n/a'
             );
             mineMessage += '\n+ Backend Database [databaseBackend]: '+ chalk.green(
-                configUrls.databaseBackend||'n/a'
+                configs.databaseBackendUrl||'n/a'
             );
     
             console.log('\n');

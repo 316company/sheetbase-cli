@@ -9,9 +9,10 @@ const logout = require('./logout');
 const start = require('./start');
 const mine = require('./mine');
 const config = require('./config');
+const whoami = require('./whoami');
 
 program
-  .version('0.0.1', '-v, --version')
+  .version('0.0.6', '-v, --version')
   .description('Sheetbase CLI');
 
 program
@@ -33,6 +34,13 @@ program
   .description('Logout of your Google account.')
   .action((cmd) => {
     logout.run();
+  });
+
+program
+  .command('whoami').alias('w')
+  .description('Show your account info.')
+  .action((cmd) => {
+    whoami.run();
   });
 
 program
@@ -61,7 +69,7 @@ program
 
 
 // Assert that a VALID command is provided 
-if (!process.argv.slice(2).length || !/[(-v)(-h)hiosmc]/.test(process.argv.slice(2))) {
+if (!process.argv.slice(2).length || !/[(-v)(-h)hiowsmc]/.test(process.argv.slice(2))) {
   console.log(chalk.yellow(figlet.textSync('Sheetbase', { horizontalLayout: 'full' })));
   program.outputHelp();
   process.exit();

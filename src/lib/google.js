@@ -14,6 +14,8 @@ const KEYS = {
 };
 
 const SCOPES = [
+    'profile',
+    'email',
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/script.projects'
 ];
@@ -22,27 +24,53 @@ function getCredentials() {
     return conf.get('google.credentials');
 }
 
+async function getClient (){
+    let client = null;
+    const credentials = getCredentials();
+    if(credentials) {
+        client = new OAuth2Client(KEYS);
+        client.setCredentials(credentials);
+        await client.refreshAccessToken();
+    }
+    return client;
+}
+
 module.exports = {
 
     getCredentials,
 
-    getClient: async () => {
-        let client = null;        
-        const credentials = getCredentials();
-        if(credentials) {
-            const oAuth2Client = new OAuth2Client();
-            oAuth2Client.setCredentials(credentials);
-            client = oAuth2Client;
+    getClient: getClient,
+
+    verify: async () => {
+        let user = null;
+        const client = await getClient();
+        if(client) {
+            try {
+                const userData = await client.verifyIdToken({
+                    idToken: client.credentials.id_token,
+                    audience: KEYS.clientId
+                });
+                const payload = userData.getPayload();
+                user = {
+                    userId: payload['sub'],
+                    email: payload['email'],
+                    accessToken: client.credentials.access_token
+                };
+            } catch(error) {}
         }
-        return client;
+        return user;
     },
 
     authorization: () => {
         return new Promise((resolve, reject) => {
             const oAuth2Client = new OAuth2Client(KEYS);    
             oAuth2Client.on('tokens', (tokens) => {
-                console.log(chalk.green('Login successfully!'));            
-                conf.set('google.credentials', tokens);
+                if (tokens.refresh_token) {
+                    conf.set('google.credentials', {
+                        refresh_token: tokens.refresh_token
+                    });
+                }    
+                console.log(chalk.green('Login successfully!'));        
             });
         
             const authorizeUrl = oAuth2Client.generateAuthUrl({
@@ -52,15 +80,23 @@ module.exports = {
             const server = http.createServer(async (req, res) => {
                 if (req.url.indexOf('/oauth2callback') > -1) {
                     const qs = querystring.parse(url.parse(req.url).query);
-                    res.end('Authentication successful! You may close this browser tab and return to the console.');
+                    if(qs.error) {
+                        res.end('Authentication fails, please try again!');
+                    } else {
+                        res.end('Authentication successful! You may close this browser tab and return to the console.');
+                    }
                     server.close();
 
-                    const r = await oAuth2Client.getToken(qs.code)
-                    oAuth2Client.setCredentials(r.tokens);
-                    resolve(oAuth2Client);
+                    if(qs.code) {
+                        const r = await oAuth2Client.getToken(qs.code)
+                        oAuth2Client.setCredentials(r.tokens);
+                        resolve(oAuth2Client);
+                    } else {
+                        reject();
+                    }
                 }
             }).listen(3160, () => {
-                opn(authorizeUrl);
+                opn(authorizeUrl, {wait: false});
             });
         });
     },

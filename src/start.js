@@ -3,41 +3,25 @@ const Spinner       = CLI.Spinner;
 const chalk         = require('chalk');
 const git           = require('simple-git/promise');
 const replace       = require('replace-in-file');
-const randomstring  = require("randomstring");
+const randomstring  = require('randomstring');
 const execSync      = require('child_process').execSync;
-const editJsonFile  = require("edit-json-file");
+const editJsonFile  = require('edit-json-file');
+const opn           = require('opn');
 
 const file = require('./lib/file');
 const inquirer = require('./lib/inquirer');
 const google = require('./lib/google');
+const config = require('./lib/config');
 
 function isValidGitUrl(str) {
     return str && str.substr(0, 8) === 'https://' && str.substr(str.length - 4, 4) === '.git';
-}
-
-async function getDatabases(dir) {
-    let database = null;
-    let databaseBackend = null;
-
-    try {
-        let text = file.readText('./'+ dir +'/backend/configs/Sheetbase.config.js');
-        database = (text.match(/\"database\"\: \"(.*?)\"/)||[])[1];
-        databaseBackend = (text.match(/\"databaseBackend\"\: \"(.*?)\"/)||[])[1];
-    } catch(error) {
-        console.error('\n\n\nGet databases: ', error);
-    }
-
-    return {
-        database,
-        databaseBackend
-    };
 }
 
 async function setupDrive(projectName, databaseId, databaseBackendId) {
     projectName = projectName.charAt(0).toUpperCase() + projectName.slice(1);
     
     const client = await google.getClient();
-    if(!client) return false;
+    if(!client) return {};
 
     let projectFolder = null;
     let contentFolder = null;
@@ -109,7 +93,9 @@ async function setupDrive(projectName, databaseId, databaseBackendId) {
             
         }
     } catch(error) {
-        console.error('\n\n\nDrive setup: ', error);
+        console.log(
+            chalk.yellow('(!) Error setting up one or more Drive files, please set them up manually!')
+        );
     }
 
 
@@ -122,6 +108,40 @@ async function setupDrive(projectName, databaseId, databaseBackendId) {
     };
 }
 
+function buildFolderName(folderName) {
+    return folderName.replace(/\ /g, '-')
+        .replace(/\</g, '-')
+        .replace(/\,/g, '-')
+        .replace(/\>/g, '-')
+        .replace(/\./g, '-')
+        .replace(/\?/g, '-')
+        .replace(/\//g, '-')
+        .replace(/\:/g, '-')
+        .replace(/\;/g, '-')
+        .replace(/\"/g, '-')
+        .replace(/\'/g, '-')
+        .replace(/\{/g, '-')
+        .replace(/\[/g, '-')
+        .replace(/\}/g, '-')
+        .replace(/\]/g, '-')
+        .replace(/\|/g, '-')
+        .replace(/\\/g, '-')
+        .replace(/\`/g, '-')
+        .replace(/\~/g, '-')
+        .replace(/\!/g, '-')
+        .replace(/\@/g, '-')
+        .replace(/\#/g, '-')
+        .replace(/\$/g, '-')
+        .replace(/\%/g, '-')
+        .replace(/\^/g, '-')
+        .replace(/\&/g, '-')
+        .replace(/\*/g, '-')
+        .replace(/\(/g, '-')
+        .replace(/\)/g, '-')
+        .replace(/\+/g, '-')
+        .replace(/\=/g, '-')
+}
+
 module.exports = {
 
     run: async (repo, dir, remote) => {
@@ -130,19 +150,35 @@ module.exports = {
         if (repo.substr(0, 18) !== 'https://github.com' && repo.substr(repo.length - 4, 4) !== '.git')
             repo = 'https://github.com/316Company/sheetbase-' + repo + '.git';
 
+        // build valid folder name & check for existance
+        dir = buildFolderName(dir);
         if (file.directoryExists('./' + dir)) {
             return console.log(
-                chalk.red('Directory exists, try other name or delete it!')
+                chalk.red('\nDirectory exists, try other name or delete it!')
             );
         }
 
-        if (!file.isValid(dir)) {
-            return console.log(
-                chalk.red('Invalid directory name!')
+        // check login status
+        const client = await google.getClient();
+        if(!client)
+            console.log(
+                chalk.yellow('\n(!) Please login to setup and config the project automatically!') +
+                '\n$ '+ chalk.green('sheetbase login')
             );
-        }
 
-        // step 1: clone repo
+
+
+        /**
+         * step 0: start action
+         */
+        console.log('\n> Create new Sheebase project.');
+
+
+
+
+        /**
+         * step 1: clone repo
+         */
         let status = new Spinner('Creating new project ...'); status.start();
         try {
             await git().clone(repo, dir);
@@ -159,13 +195,13 @@ module.exports = {
             );
         }
 
-        // setup drive
-        const databases = await getDatabases(dir);
-        const driveIds = await setupDrive(
-            dir, databases.database, databases.databaseBackend
-        );        
 
-        // random data
+
+        /**
+         * step 2: setup drive and other values
+         */
+        let configs = await config.getConfigs(dir);
+        const driveIds = await setupDrive(dir, configs.database, configs.databaseBackend);
         const apiKey = randomstring.generate();
         const encryptionKey = randomstring.generate({
             length: 12,
@@ -173,7 +209,9 @@ module.exports = {
         });
 
 
-        // step 2: config
+        /**
+         * step 3: update config
+         */
         try {
             let filePath = '';
             let jsonFile = null;
@@ -210,7 +248,6 @@ module.exports = {
                         /\"encryptionKey\"\: \".*\"/,
 
                         /\"database\"\: \".*\"/,
-                        /\"backend\"\: \".*\"/,
 
                         /\"contentFolder\"\: \".*\"/,
                         /\"databaseBackend\"\: \".*\"/
@@ -220,7 +257,6 @@ module.exports = {
                         '\"encryptionKey\": \"' + encryptionKey + '\"',
 
                         '\"database\"\: \"'+ (driveIds.database||'<your_spreadsheet_id>') +'\"',
-                        '\"backend\"\: \"<your_webapp_id>\"',
 
                         '\"contentFolder\"\: \"'+ (driveIds.contentFolder||'<your_folder_id>') +'\"',
                         '\"databaseBackend\"\: \"'+ (driveIds.databaseBackend||'<your_spreadsheet_id>') +'\"'
@@ -255,9 +291,12 @@ module.exports = {
             );
         }
 
-        // TODO: push apps script
 
-        // step 3: git
+
+
+        /**
+         * step 4: setup git 
+         */
         await file.rmDir('./' + dir + '/.git');
         await git('./' + dir).init();
         await git('./' + dir).add('./*');
@@ -281,61 +320,89 @@ module.exports = {
         } else {
             status.stop();
         }
-        
+
         console.log('\n'+ chalk.green('New Sheetbase project created successfully!'));
 
-        // step 4: install packages
-        console.log('\nInstalling packages ...');
+
+
+        /**
+         * step 5: push & deploy script 
+         */
+        if(driveIds.backendScript) {
+            // push using clasp
+            console.log('\n> Push backend script, must have @google/clasp installed.');
+            try {
+                await execSync('clasp push', {cwd: './'+ dir +'/backend', stdio: 'inherit'});
+            } catch(error) {
+                return console.log(
+                    chalk.red('\nError trying to push backend script.')
+                );
+            }
+
+            // open script in browser
+            opn('https://script.google.com/d/'+ driveIds.backendScript +'/edit', {wait: false});
+
+            // ask for baclend Id
+            const backendAnswers = await inquirer.askForBackendId();
+            filePath = './' + dir + '/src/configs/sheetbase.config.ts';
+            if(backendAnswers.backend && file.fileExists(filePath)) {
+                // set backend to config
+                await replace({
+                    files: filePath,
+                    from: [
+                        /\"backend\"\: \".*\"/
+                    ],
+                    to: [
+                        '\"backend\"\: \"'+ backendAnswers.backend +'\"'
+                    ]
+                });
+
+                // git add & commit
+                await git('./' + dir).add('./*');
+                await git('./' + dir).commit('Update backend');
+            }
+        }
+
+        
+
+        /**
+         * step 6: install packages 
+         */
+        console.log('\n> Install packages.');
         try {
             await execSync('npm install', {cwd: './'+ dir, stdio: 'inherit'});
         } catch(error) {
-            status.stop();
             return console.log(
                 chalk.red('\nError trying install packages.')
             );
         }
 
-        // final: response
-        let suggestCommandsMessage = '   $ ' + chalk.green(
-            'cd ./' + dir
-        )
-        if (driveIds.backendScript) {
-            suggestCommandsMessage += '\n   $ ' + chalk.green(
-                'clasp push'
-            );
-            suggestCommandsMessage += '\n   + Deploy backend script as Web App (see link below), then:';
-            suggestCommandsMessage += '\n   $ '+ chalk.green('sheetbase config backend=<your_webapp_id>');
+
+
+        /**
+         * final: response
+         */
+        let suggestCommandsMessage = '';
+        suggestCommandsMessage += '   $ ' + chalk.green('cd ./' + dir);  
+        suggestCommandsMessage += '\n   $ ' + chalk.green('sheetbase mine -o') +' - See the Drive folder.';  
+        if (isValidGitUrl(remote)) {
+            suggestCommandsMessage += '\n   $ ' + chalk.green('git push -u origin master');        
         }
-        if (isValidGitUrl(remote))
-            suggestCommandsMessage += '\n   $ ' + chalk.green(
-                'git push -u origin master'
-            );
-        
 
-        let projectPropertiesMessage = '   Remote repo: '+ chalk.green(
-            isValidGitUrl(remote) ? remote: 'n/a'
-        );
-        projectPropertiesMessage += '\n   Drive folder: '+ chalk.green(
-            driveIds.projectFolder ? 'https://drive.google.com/drive/folders/'+ driveIds.projectFolder: 'n/a'
-        );
-        projectPropertiesMessage += '\n   Backend script: '+ chalk.green(
-            driveIds.backendScript ? 'https://script.google.com/d/'+ driveIds.backendScript +'/edit': 'n/a'
-        );
-        projectPropertiesMessage += '\n   Database: '+ chalk.green(
-            driveIds.database ? 'https://docs.google.com/spreadsheets/d/'+ driveIds.database +'/edit': 'n/a'
-        );
-        projectPropertiesMessage += '\n   Database (backend): '+ chalk.green(
-            driveIds.databaseBackend ? 'https://docs.google.com/spreadsheets/d/'+ driveIds.databaseBackend +'/edit': 'n/a'
-        );
-
+        configs = await config.getConfigs(dir);
+        let propertiesMessage = ''; 
+            propertiesMessage += '+ Remote repo: '+ chalk.green(isValidGitUrl(remote) ? remote: 'n/a');
+            propertiesMessage += '\n+ Backend: '+ chalk.green(configs.backend||'n/a');
+            propertiesMessage += '\n+ Drive folder: '+ chalk.green(configs.projectFolder||'n/a');
+            propertiesMessage += '\n+ Backend script: '+ chalk.green(configs.backendScript||'n/a');
+            propertiesMessage += '\n+ Database: '+ chalk.green(configs.database||'n/a');
+            propertiesMessage += '\n+ Database (backend): '+ chalk.green(configs.databaseBackend||'n/a');
         
-        console.log('\n\n\nDone! What next?\n');
-        console.log(suggestCommandsMessage);
-        
-        console.log('\nProject properties:\n');
-        console.log(projectPropertiesMessage);
+        console.log('\n\n\n> Done! What next?\n');
+        console.log(suggestCommandsMessage);        
+        console.log('\n> Properties & configurations:\n');
+        console.log(propertiesMessage);
         console.log('\n');
-
     }
 
 }
