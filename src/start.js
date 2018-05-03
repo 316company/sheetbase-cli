@@ -17,7 +17,7 @@ function isValidGitUrl(str) {
     return str && str.substr(0, 8) === 'https://' && str.substr(str.length - 4, 4) === '.git';
 }
 
-async function setupDrive(projectName, databaseId) {
+async function setupDrive(projectName, sampleDatabaseId) {
     projectName = projectName.charAt(0).toUpperCase() + projectName.slice(1);
     
     const client = await google.getClient();
@@ -26,8 +26,7 @@ async function setupDrive(projectName, databaseId) {
     let projectFolder = null;
     let contentFolder = null;
     let backendScript = null;
-    let database = null;
-    let databaseBackend = null;
+    let databaseId = null;
 
     try {
         let projectFolderResponse = await client.request({
@@ -55,16 +54,16 @@ async function setupDrive(projectName, databaseId) {
             if(contentFolderResponse.data.id) contentFolder = contentFolderResponse.data.id;
     
             // database
-            if(databaseId) {
+            if(sampleDatabaseId) {
                 let databaseResponse = await client.request({
                     method: 'post',
-                    url: 'https://www.googleapis.com/drive/v3/files/'+ databaseId +'/copy',
+                    url: 'https://www.googleapis.com/drive/v3/files/'+ sampleDatabaseId +'/copy',
                     data: {
                         'name': projectName +' Database',
                         'parents': [projectFolder]
                     }
                 });
-                if(databaseResponse.data.id) database = databaseResponse.data.id;
+                if(databaseResponse.data.id) databaseId = databaseResponse.data.id;
             }
             
             // backendScript
@@ -90,8 +89,7 @@ async function setupDrive(projectName, databaseId) {
         projectFolder,
         contentFolder,
         backendScript,
-        database,
-        databaseBackend
+        databaseId
     };
 }
 
@@ -131,11 +129,11 @@ function buildFolderName(folderName) {
 
 module.exports = {
 
-    run: async (repo, dir, remote) => {
+    run: async (repoUrl, dir, remoteUrl) => {
         var _this = this;
 
-        if (repo.substr(0, 18) !== 'https://github.com' && repo.substr(repo.length - 4, 4) !== '.git')
-            repo = 'https://github.com/316Company/sheetbase-' + repo + '.git';
+        if (repoUrl.substr(0, 18) !== 'https://github.com' && repoUrl.substr(repoUrl.length - 4, 4) !== '.git')
+            repoUrl = 'https://github.com/316Company/sheetbase-' + repoUrl + '.git';
 
         // build valid folder name & check for existance
         dir = buildFolderName(dir);
@@ -168,17 +166,17 @@ module.exports = {
          */
         let status = new Spinner('Creating new project ...'); status.start();
         try {
-            await git().clone(repo, dir);
+            await git().clone(repoUrl, dir);
 
             if (!file.fileExists('./' + dir + '/sheetbase.config.json')) {
                 console.log(
-                    chalk.yellow('\n(!) Looks like the repo is not a valid Sheetbase theme! Repo: ' + repo)
+                    chalk.yellow('\n(!) Looks like the repo is not a valid Sheetbase theme! Repo: ' + repoUrl)
                 );
             }
         } catch (error) {
             status.stop();
             return console.log(
-                chalk.red('\nRepo not exists or errors happen! Repo: ' + repo)
+                chalk.red('\nRepo not exists or errors happen! Repo: ' + repoUrl)
             );
         }
 
@@ -188,7 +186,7 @@ module.exports = {
          * step 2: setup drive and other values
          */
         let configs = await config.getConfigs(dir);
-        const driveIds = await setupDrive(dir, configs.database);
+        const driveIds = await setupDrive(dir, configs.databaseId);
         const apiKey = randomstring.generate();
         const encryptionKey = randomstring.generate({
             length: 12,
@@ -234,7 +232,7 @@ module.exports = {
                         /\"apiKey\"\: \".*\"/,
                         /\"encryptionKey\"\: \".*\"/,
 
-                        /\"database\"\: \".*\"/,
+                        /\"databaseId\"\: \".*\"/,
 
                         /\"contentFolder\"\: \".*\"/
                     ],
@@ -242,7 +240,7 @@ module.exports = {
                         '\"apiKey\": \"' + apiKey + '\"',
                         '\"encryptionKey\": \"' + encryptionKey + '\"',
 
-                        '\"database\"\: \"'+ (driveIds.database||'<your_spreadsheet_id>') +'\"',
+                        '\"databaseId\"\: \"'+ (driveIds.databaseId||'<your_spreadsheet_id>') +'\"',
 
                         '\"contentFolder\"\: \"'+ (driveIds.contentFolder||'<your_folder_id>') +'\"'
                     ]
@@ -256,15 +254,11 @@ module.exports = {
                     files: filePath,
                     from: [
                         /\"apiKey\"\: \".*\"/,
-
-                        /\"database\"\: \".*\"/,
-                        /\"backend\"\: \".*\"/
+                        /\"backendUrl\"\: \".*\"/
                     ],
                     to: [
                         '\"apiKey\"\: \"' + apiKey + '\"',
-
-                        '\"database\"\: \"'+ (driveIds.database||'<your_spreadsheet_id>') +'\"',
-                        '\"backend\"\: \"<your_webapp_id>\"'
+                        '\"backendUrl\"\: \"<your_webapp_id>\"'
                     ]
                 });
             }
@@ -286,16 +280,16 @@ module.exports = {
         await git('./' + dir).init();
         await git('./' + dir).add('./*');
         await git('./' + dir).commit('Initial commit');
-        if(remote) {
-            // setup remote
+        if(remoteUrl) {
+            // setup remoteUrl
             status.stop();
             try {                
-                if (typeof remote !== 'string') {
+                if (typeof remoteUrl !== 'string') {
                     const remoteAnswers = await inquirer.askForRemoteRepo();
-                    remote = remoteAnswers.remote;
+                    remoteUrl = remoteAnswers.remoteUrl;
                 }
-                if(isValidGitUrl(remote)) {
-                    await git('./' + dir).addRemote('origin', remote);
+                if(isValidGitUrl(remoteUrl)) {
+                    await git('./' + dir).addRemote('origin', remoteUrl);
                 }
             } catch (error) {
                 return console.log(
@@ -330,15 +324,15 @@ module.exports = {
             // ask for baclend Id
             const backendAnswers = await inquirer.askForBackendId();
             filePath = './' + dir + '/src/configs/sheetbase.config.ts';
-            if(backendAnswers.backend && file.fileExists(filePath)) {
+            if(backendAnswers.backendUrl && file.fileExists(filePath)) {
                 // set backend to config
                 await replace({
                     files: filePath,
                     from: [
-                        /\"backend\"\: \".*\"/
+                        /\"backendUrl\"\: \".*\"/
                     ],
                     to: [
-                        '\"backend\"\: \"'+ backendAnswers.backend +'\"'
+                        '"backendUrl": "'+ backendAnswers.backendUrl +'"'
                     ]
                 });
 
@@ -369,18 +363,18 @@ module.exports = {
          */
         let suggestCommandsMessage = '';
         suggestCommandsMessage += '   $ ' + chalk.green('cd ./' + dir);  
-        suggestCommandsMessage += '\n   $ ' + chalk.green('sheetbase mine -o') +' - See the Drive folder.';  
-        if (isValidGitUrl(remote)) {
+        suggestCommandsMessage += '\n   $ ' + chalk.green('sheetbase mine -o') +' (see the Drive folder)';  
+        if (isValidGitUrl(remoteUrl)) {
             suggestCommandsMessage += '\n   $ ' + chalk.green('git push -u origin master');        
         }
 
         configs = await config.getConfigs(dir);
         let propertiesMessage = ''; 
-            propertiesMessage += '+ Repo: '+ chalk.green(isValidGitUrl(remote) ? remote: 'n/a');
-            propertiesMessage += '\n+ Backend: '+ chalk.green(configs.backend||'n/a');
+            propertiesMessage += '+ Repo: '+ chalk.green(isValidGitUrl(remoteUrl) ? remoteUrl: 'n/a');
+            propertiesMessage += '\n+ Backend Url: '+ chalk.green(configs.backendUrl||'n/a');
             propertiesMessage += '\n+ Drive folder: '+ chalk.green(configs.projectFolder||'n/a');
             propertiesMessage += '\n+ Backend script: '+ chalk.green(configs.backendScript||'n/a');
-            propertiesMessage += '\n+ Database: '+ chalk.green(configs.database||'n/a');
+            propertiesMessage += '\n+ Database: '+ chalk.green(configs.databaseId||'n/a');
         
         console.log('\n\n\n> Done! What next?\n');
         console.log(suggestCommandsMessage);        

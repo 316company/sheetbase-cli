@@ -12,13 +12,15 @@ const config = require('./config');
 const whoami = require('./whoami');
 
 program
-  .version('0.0.7', '-v, --version')
+  .version('0.0.8', '-v, --version')
+  .usage('sheetbase [options] [command]')
   .description('Sheetbase CLI');
 
 program
   .command('help').alias('h')
   .description('Output help')
   .action(() => {
+    console.log(chalk.yellow(figlet.textSync('Sheetbase', { horizontalLayout: 'full' })));
     program.outputHelp();
   });
 

@@ -14,9 +14,10 @@ module.exports = {
             // raw values
             text = file.readText(rootDir +'sheetbase.config.json');
             configs.projectFolder = (text.match(/\"driveFolder\"\: \"(.*?)\"/)||[])[1];
+            text = file.readText(rootDir +'backend/configs/Sheetbase.config.js');
+            configs.databaseId = (text.match(/\"databaseId\"\: \"(.*?)\"/)||[])[1];
             text = file.readText(rootDir +'src/configs/sheetbase.config.ts');
-            configs.database = (text.match(/\"database\"\: \"(.*?)\"/)||[])[1];
-            configs.backend = (text.match(/\"backend\"\: \"(.*?)\"/)||[])[1];
+            configs.backendUrl = (text.match(/\"backendUrl\"\: \"(.*?)\"/)||[])[1];
             text = file.readText(rootDir +'backend/.clasp.json');
             configs.backendScript = (text.match(/\"scriptId\"\: \"(.*?)\"/)||[])[1];
 
@@ -27,9 +28,8 @@ module.exports = {
 
             // build link
             if(configs.projectFolder) configs.projectFolderUrl = `https://drive.google.com/drive/folders/${configs.projectFolder}`;
-            if(configs.backend) configs.backendUrl = `https://script.google.com/macros/s/${configs.backend}/exec`;
             if(configs.backendScript) configs.backendScriptUrl = `https://script.google.com/d/${configs.backendScript}/edit`;
-            if(configs.database) configs.databaseUrl = `https://docs.google.com/spreadsheets/d/${configs.database}/edit`;
+            if(configs.databaseId) configs.databaseUrl = `https://docs.google.com/spreadsheets/d/${configs.databaseId}/edit`;
 
         } catch(error) {
             console.log(

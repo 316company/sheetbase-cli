@@ -33,16 +33,16 @@ module.exports = {
                     appConfigTo.push('\"apiKey\": \"' + configData[key] + '\"');
                 break;
 
-                case 'database':
-                    backendConfigFrom.push(/\"database\"\: \".*\"/);
-                    backendConfigTo.push('\"database\": \"' + configData[key] + '\"');
-                    appConfigFrom.push(/\"database\"\: \".*\"/);
-                    appConfigTo.push('\"database\": \"' + configData[key] + '\"');
+                case 'databaseId':
+                    backendConfigFrom.push(/\"databaseId\"\: \".*\"/);
+                    backendConfigTo.push('\"databaseId\": \"' + configData[key] + '\"');
+                    appConfigFrom.push(/\"databaseId\"\: \".*\"/);
+                    appConfigTo.push('\"databaseId\": \"' + configData[key] + '\"');
                 break;
 
-                case 'backend':
-                    appConfigFrom.push(/\"backend\"\: \".*\"/);
-                    appConfigTo.push('\"backend\": \"' + configData[key] + '\"');
+                case 'backendUrl':
+                    appConfigFrom.push(/\"backendUrl\"\: \".*\"/);
+                    appConfigTo.push('\"backendUrl\": \"' + configData[key] + '\"');
                 break;
 
                 case 'contentFolder':

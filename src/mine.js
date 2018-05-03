@@ -21,7 +21,7 @@ module.exports = {
             if(typeof configKey !== 'string') {
                 linkToOpen = configs.projectFolderUrl;
             } else {
-                linkToOpen = configs[configKey +'Url'];
+                linkToOpen = configs[configKey];
             }
             if(linkToOpen) {
                 opn(linkToOpen);
@@ -29,16 +29,16 @@ module.exports = {
             }
         } else {
             let mineMessage = '';
-            mineMessage += '\n+ Backend [backend]: '+ chalk.green(
+            mineMessage += '\n+ Backend [backendUrl]: '+ chalk.green(
                 configs.backendUrl||'n/a'
             );
-            mineMessage += '+ Drive folder [projectFolder]: '+ chalk.green(
+            mineMessage += '\n+ Drive folder [projectFolderUrl]: '+ chalk.green(
                 configs.projectFolderUrl||'n/a'
             );
-            mineMessage += '\n+ Backend script [backendScript]: '+ chalk.green(
+            mineMessage += '\n+ Backend script [backendScriptUrl]: '+ chalk.green(
                 configs.backendScriptUrl||'n/a'
             );
-            mineMessage += '\n+ Database [database]: '+ chalk.green(
+            mineMessage += '\n+ Database [databaseUrl]: '+ chalk.green(
                 configs.databaseUrl||'n/a'
             );
     
