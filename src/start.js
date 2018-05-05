@@ -78,12 +78,38 @@ async function setupDrive(projectName, sampleDatabaseId) {
             if(backendScriptResponse.data.scriptId) backendScript = backendScriptResponse.data.scriptId;
             
         }
-    } catch(error) {
-        console.log(
-            chalk.yellow('(!) Error setting up one or more Drive files, please set them up manually!')
-        );
-    }
+    } catch(error) {}
 
+    if(!projectFolder || !contentFolder || !databaseId || !backendScript) {
+        projectName = projectName.toLowerCase();
+
+        console.log('\n');
+        console.log(
+            chalk.yellow('\n(!) Error setting up one or more Drive files, please set them up manually!')
+        );
+
+        var missingMessage = '';
+        if(!contentFolder) {
+            missingMessage += (
+                '\n'+
+                '+ '+ chalk.yellow('contentFolder') +' (./'+ projectName +'/backend/configs/Sheetbase.config.js)'
+            );
+        }
+        if(!databaseId) {
+            missingMessage += (
+                '\n'+
+                '+ '+ chalk.yellow('databaseId') +' (./'+ projectName +'/backend/configs/Sheetbase.config.js)'
+            );
+        }
+        if(!backendScript) {
+            missingMessage += (
+                '\n'+
+                '+ '+ chalk.yellow('scriptId') +' (./'+ projectName +'/backend/.clasp.json)'
+            );
+        }
+        console.log(missingMessage);
+        console.log('\n');
+    }
 
     return {
         projectFolder,

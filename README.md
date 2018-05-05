@@ -77,12 +77,12 @@ $ sheetbase login
 $ sheetbase whoami
 
 $ sheetbase start myProject
-$ sheetbase start myProject -t ionic-simpleblog
-$ sheetbase start myProject -r https://github.com/316Company/some-awesome-sheetbase-theme.git
+$ sheetbase start "my project" -t ionic-simpleblog
+$ sheetbase start myProject -r https://github.com/<username>/<my_repo>.git
 
-$ sheetbase mine -o
+$ sheetbase mine -o # open the project Drive folder in browser
 
-$ sheetbase config apiKey=my_api_key|database=my_database # multiple values
+$ sheetbase config "apiKey=my_api_key|database=my_database" # multiple values
 
 ```
 
