@@ -13,7 +13,7 @@ import url from "./src/url";
 import config from "./src/config";
 
 program
-  .version('0.0.10', '-v, --version')
+  .version('0.0.12', '-v, --version')
   .usage('sheetbase [options] [command]')
   .description('Sheetbase CLI');
 

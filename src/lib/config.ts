@@ -95,6 +95,7 @@ function getConfigTypeIonic(): IAppConfig {
 async function setConfigTypeIonic(configData: IAppConfig) {
     let backendConfigFrom = []; let backendConfigTo = [];
     let appConfigFrom = []; let appConfigTo = [];
+    
     for(let key in configData) {
         switch(key) {
             case 'apiKey':
@@ -134,13 +135,6 @@ async function setConfigTypeIonic(configData: IAppConfig) {
         from: backendConfigFrom,
         to: backendConfigTo
     });
-    // .clasp.json
-    await file.editJson(
-        './backend/.clasp.json',
-        {
-            scriptId: configData.scriptId
-        }
-    );
 
     // frontend
     await replace({
@@ -148,5 +142,15 @@ async function setConfigTypeIonic(configData: IAppConfig) {
         from: appConfigFrom,
         to: appConfigTo
     });
+    
+    // .clasp.json
+    if(configData.scriptId) {
+        await file.editJson(
+            './backend/.clasp.json',
+            {
+                scriptId: configData.scriptId
+            }
+        );
+    }
 
 }
