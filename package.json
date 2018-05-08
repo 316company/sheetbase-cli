@@ -1,11 +1,11 @@
 {
   "name": "sheetbase-cli",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Official CLI for working with Sheetbase projects. ",
-  "main": "./dist/index.js",
+  "main": "./index.js",
   "preferGlobal": true,
   "bin": {
-    "sheetbase": "./dist/index.js"
+    "sheetbase": "./index.js"
   },
   "scripts": {
     "copy": "copy package.json dist && copy README.md dist",
