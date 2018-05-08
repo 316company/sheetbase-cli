@@ -1,14 +1,15 @@
 {
   "name": "sheetbase-cli",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Official CLI for working with Sheetbase projects. ",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "preferGlobal": true,
   "bin": {
-    "sheetbase": "./src/index.js"
+    "sheetbase": "./dist/index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -44,5 +45,10 @@
     "simple-git": "^1.92.0",
     "touch": "^3.1.0",
     "url": "^0.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.0.4",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3"
   }
 }

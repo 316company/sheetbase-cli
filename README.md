@@ -40,27 +40,45 @@ Options:
 
 **--theme**|**-t** [theme]: Official theme name or .git url.
 
-**--remote**|**-r** [remote]: Your project remote repo .git url.
+**--noNpmInstall**|**-x**: Do not install packages.
 
-### mine
+**--noGit**|**-u**: Do not setup GIT.
 
-Ouput project usefull resources.
+### setup
 
-``$ sheetbase mine [options]``
+Setup a project.
+
+``$ sheetbase setup [options]``
 
 Options:
 
-**--open**|**-o** [configKey]: Open link in the browser.
+**--noNpmInstall**|**-x**: Do not install packages.
+
+**--noGit**|**-u**: Do not setup GIT.
+
+### url
+
+Ouput project usefull links.
+
+``$ sheetbase url [options]``
+
+Options:
+
+**--open**|**-o** [urlKey]: Open link in the browser.
 
 ### config
 
-Set config for the project.
+Get/set config for the project.
 
-``$ sheetbase config <data>``
+``$ sheetbase config <action> [options]``
 
 Params:
 
-**data**: Config data in format of key=value, ex. ``apiKey=my_api_key``, ``database=my_database``
+**action**: Sub action, can be *get* or *set*.
+
+Options:
+
+**--manual**|**-m** [data]: For *set* action only, manual config data in format of key=value, ex. ``apiKey=my_api_key``, ``database=my_database``
 
 ### help
 
@@ -72,17 +90,22 @@ Show helps.
 
 ```bash
 $ sheetbase -v
+$ sheetbase help
 
 $ sheetbase login
 $ sheetbase whoami
 
 $ sheetbase start myProject
-$ sheetbase start "my project" -t ionic-simpleblog
-$ sheetbase start myProject -r https://github.com/<username>/<my_repo>.git
+$ sheetbase start myProject -t ionic-simpleblog
+$ sheetbase start myProject -t https://<git_url_to_a_sheetbase_theme>.git
 
-$ sheetbase mine -o # open the project Drive folder in browser
+$ sheetbase setup # run inside a sheetbase project
 
-$ sheetbase config "apiKey=my_api_key|database=my_database" # multiple values
+$ sheetbase url -o # open the project Drive folder in browser
+
+$ sheetbase config get
+$ sheetbase config set
+$ sheetbase config set -m "apiKey=my_api_key|database=my_database" # multiple values
 
 ```
 
