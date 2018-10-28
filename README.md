@@ -1,3 +1,7 @@
+# ⛔️ DEPRECATED
+
+Please use [@sheetbase/cli](https://github.com/sheetbase/cli) instead.
+
 # Sheetbase CLI
 
 Official CLI for working with Sheetbase.
